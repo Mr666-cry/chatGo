@@ -59,37 +59,25 @@
         #login-form input[type="text"] {
             border: 1px solid #ccc; padding: 0.7rem; border-radius: 8px; font-size: 1rem;
         }
-        .file-input-container {
-            position: relative;
+        #profile-pic-options {
             display: flex;
-            align-items: center;
+            justify-content: center;
             gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
         }
-        .file-input-container label {
-            background-color: #007BFF;
-            color: white;
-            padding: 0.7rem;
-            border-radius: 8px;
+        .profile-pic-option {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
             cursor: pointer;
-            font-size: 0.9rem;
-            flex-grow: 1;
-            text-align: center;
-            transition: background-color 0.2s;
+            border: 3px solid transparent;
+            transition: border-color 0.2s, transform 0.2s;
         }
-        .file-input-container label:hover {
-            background-color: #0056b3;
-        }
-        #profile-pic-input {
-            display: none;
-        }
-        #file-name {
-            font-size: 0.9rem;
-            color: #555;
-            flex-grow: 2;
-            text-align: left;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .profile-pic-option.selected {
+            border-color: #007BFF;
+            transform: scale(1.1);
         }
         #login-form button {
             background-color: #007BFF; color: white; border: none; padding: 0.7rem;
@@ -163,7 +151,7 @@
 <body>
     <div id="chat-app">
         <div id="chat-header">
-            Firebase Live Chat
+            Live Chat By SamuDev 🐉 
             <button id="logout-btn" style="display: none;">Logout</button>
         </div>
         
@@ -171,11 +159,12 @@
             <h2>Masuk</h2>
             <form id="login-form">
                 <input type="text" id="username-input" placeholder="Masukkan nama Anda" required autocomplete="name">
-                <label style="text-align: left; font-size: 0.9rem;">Pilih Foto Profil (Opsional):</label>
-                <div class="file-input-container">
-                    <label for="profile-pic-input">Pilih File</label>
-                    <span id="file-name">Tidak ada file yang dipilih</span>
-                    <input type="file" id="profile-pic-input" accept="image/*">
+                <label style="text-align: center; font-size: 0.9rem; margin-top: 10px;">Pilih Foto Profil:</label>
+                <div id="profile-pic-options">
+                    <img src="https://i.postimg.cc/FR3qkxJT/b99cd35291cef3008b1c96a1773b1818.jpg" class="profile-pic-option" data-url="https://i.postimg.cc/FR3qkxJT/b99cd35291cef3008b1c96a1773b1818.jpg" alt="Foto 1">
+                    <img src="https://i.postimg.cc/GpZVpf9B/9095133eaf8b33cb6fe6a5a7a612c741.jpg" class="profile-pic-option" data-url="https://i.postimg.cc/GpZVpf9B/9095133eaf8b33cb6fe6a5a7a612c741.jpg" alt="Foto 2">
+                    <img src="https://i.postimg.cc/MGcgqwZ2/31c5c2d7504df487d89d51584417628a.jpg" class="profile-pic-option" data-url="https://i.postimg.cc/MGcgqwZ2/31c5c2d7504df487d89d51584417628a.jpg" alt="Foto 3">
+                    <img src="https://i.postimg.cc/dVNgb3Yj/129965316c93c051afb13b0cbe6bdeb7.jpg" class="profile-pic-option" data-url="https://i.postimg.cc/dVNgb3Yj/129965316c93c051afb13b0cbe6bdeb7.jpg" alt="Foto 4">
                 </div>
                 <button type="submit">Lanjutkan</button>
             </form>
@@ -206,16 +195,15 @@
 
         const loginForm = document.getElementById('login-form');
         const usernameInput = document.getElementById('username-input');
-        const profilePicInput = document.getElementById('profile-pic-input');
+        const profilePicOptions = document.getElementById('profile-pic-options');
         const loginContainer = document.getElementById('login-container');
         const messagesContainer = document.getElementById('messages-container');
         const messageForm = document.getElementById('message-form');
         const messageInput = document.getElementById('message-input');
         const logoutBtn = document.getElementById('logout-btn');
-        const fileNameSpan = document.getElementById('file-name');
         
         let currentUser = { name: null, profilePicUrl: null };
-        const POSTIMAGE_API_KEY = "367b93bc2d63c10673f00a87b8f01622";
+        let selectedProfilePicUrl = null;
 
         const storedUser = localStorage.getItem('chat_user');
         if (storedUser) {
@@ -223,58 +211,28 @@
             showChatScreen();
         }
 
-        loginForm.addEventListener('submit', async (event) => {
+        profilePicOptions.addEventListener('click', (event) => {
+            const clickedImage = event.target.closest('.profile-pic-option');
+            if (clickedImage) {
+                document.querySelectorAll('.profile-pic-option').forEach(img => {
+                    img.classList.remove('selected');
+                });
+                clickedImage.classList.add('selected');
+                selectedProfilePicUrl = clickedImage.dataset.url;
+            }
+        });
+
+        loginForm.addEventListener('submit', (event) => {
             event.preventDefault();
             const name = usernameInput.value.trim();
+
             if (!name) {
                 alert('Nama tidak boleh kosong!');
                 return;
             }
 
             currentUser.name = name;
-
-            const file = profilePicInput.files[0];
-            if (file) {
-                try {
-                    const base64String = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                            resolve(reader.result.split(',')[1]);
-                        };
-                        reader.onerror = error => reject(error);
-                        reader.readAsDataURL(file);
-                    });
-
-                    const response = await fetch(`https://postimage.org/json/`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            "key": POSTIMAGE_API_KEY,
-                            "upload": base64String
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    console.log("Respons dari Postimage.org:", result);
-
-                    if (result.status === "OK") {
-                        currentUser.profilePicUrl = result.url;
-                    } else {
-                        console.error("Gagal mengunggah foto. Respons API:", result);
-                        alert(`Gagal mengunggah foto. Alasan: ${result.error || 'Tidak diketahui'}`);
-                        currentUser.profilePicUrl = null;
-                    }
-                } catch (error) {
-                    console.error("Error saat mengunggah foto:", error);
-                    alert("Terjadi kesalahan saat mengunggah foto. Pastikan Anda terhubung ke internet.");
-                    currentUser.profilePicUrl = null;
-                }
-            } else {
-                currentUser.profilePicUrl = null;
-            }
+            currentUser.profilePicUrl = selectedProfilePicUrl;
             
             localStorage.setItem('chat_user', JSON.stringify(currentUser));
             showChatScreen();
@@ -284,14 +242,6 @@
             localStorage.removeItem('chat_user');
             currentUser = { name: null, profilePicUrl: null };
             location.reload();
-        });
-
-        profilePicInput.addEventListener('change', () => {
-            if (profilePicInput.files.length > 0) {
-                fileNameSpan.textContent = profilePicInput.files[0].name;
-            } else {
-                fileNameSpan.textContent = 'Tidak ada file yang dipilih';
-            }
         });
 
         function showChatScreen() {
@@ -386,4 +336,4 @@
         });
     </script>
 </body>
-                                           </html>
+    </html>
