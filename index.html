@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chat ⚡</title>
+    
+    <style>
+        /* Reset dasar dan box-sizing untuk layout yang lebih konsisten */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%; /* Memastikan body mengisi seluruh tinggi layar */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #1c1e21;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Kontainer utama aplikasi, dioptimalkan untuk mengisi layar mobile */
+        #chat-app {
+            width: 100%;
+            height: 100%; /* Mengisi seluruh tinggi body */
+            max-width: 600px;
+            background: #ffffff;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            /* Di layar besar, berikan sedikit border-radius */
+            border-radius: 12px;
+        }
+        
+        /* Hilangkan border-radius di layar kecil agar tampak penuh */
+        @media (max-width: 600px) {
+            #chat-app {
+                border-radius: 0;
+            }
+        }
+
+        #chat-header {
+            background: linear-gradient(135deg, #007BFF, #0056b3);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            flex-shrink: 0; /* Mencegah header menyusut */
+        }
+
+        #messages-container {
+            flex-grow: 1; /* Mengisi sisa ruang yang tersedia */
+            padding: 1rem;
+            overflow-y: auto; /* Scroll hanya jika konten meluap */
+            scroll-behavior: smooth; /* Animasi scroll yang halus */
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0.75rem;
+        }
+
+        .message-content {
+            background-color: #e4e6eb;
+            padding: 0.6rem 1rem;
+            border-radius: 18px;
+            max-width: 80%;
+            align-self: flex-start;
+            word-wrap: break-word; /* Memastikan teks panjang tidak merusak layout */
+        }
+        
+        .message-content strong {
+            display: block;
+            color: #007BFF;
+            margin-bottom: 0.2rem;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        #message-form {
+            display: flex;
+            padding: 0.75rem;
+            border-top: 1px solid #ddd;
+            background-color: #f9f9f9;
+            flex-shrink: 0; /* Mencegah form menyusut */
+        }
+
+        #message-form input {
+            border: 1px solid #ccc;
+            padding: 0.7rem;
+            border-radius: 20px;
+            font-size: 1rem;
+            flex-grow: 1;
+            transition: border-color 0.2s;
+        }
+
+        #message-form input:focus {
+            outline: none;
+            border-color: #007BFF;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        
+        #name-input {
+            flex-grow: 0;
+            width: 100px;
+            margin-right: 0.5rem;
+        }
+
+        #message-form button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 0 1.25rem;
+            margin-left: 0.5rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        #message-form button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="chat-app">
+        <div id="chat-header">Firebase Live Chat</div>
+        <div id="messages-container">
+            </div>
+        <form id="message-form" action="javascript:void(0);">
+            <input type="text" id="name-input" placeholder="Nama" required autocomplete="name">
+            <input type="text" id="message-input" placeholder="Ketik pesan..." required autocomplete="off">
+            <button type="submit">Kirim</button>
+        </form>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // 1. Konfigurasi Firebase Anda
+        const firebaseConfig = {
+            apiKey: "AIzaSyByXv08gFFtlW5cStMaOjFEkK-EybTFzA8",
+            authDomain: "chat-samudev.firebaseapp.com",
+            databaseURL: "https://chat-samudev-default-rtdb.firebaseio.com",
+            projectId: "chat-samudev",
+            storageBucket: "chat-samudev.appspot.com",
+            messagingSenderId: "753343096382",
+            appId: "1:753343096382:android:5174bd75dce635ff4d936f"
+        };
+
+        // 2. Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 3. Referensi ke elemen-elemen HTML
+        const messageForm = document.getElementById('message-form');
+        const nameInput = document.getElementById('name-input');
+        const messageInput = document.getElementById('message-input');
+        const messagesContainer = document.getElementById('messages-container');
+        
+        // Simpan & muat nama dari local storage untuk kemudahan pengguna
+        nameInput.value = localStorage.getItem('chat_username') || '';
+        nameInput.addEventListener('input', () => {
+            localStorage.setItem('chat_username', nameInput.value);
+        });
+
+        // 4. Logika untuk MENGIRIM pesan
+        messageForm.addEventListener('submit', (event) => {
+            event.preventDefault(); // Mencegah form refresh halaman
+
+            const name = nameInput.value.trim();
+            const text = messageInput.value.trim();
+
+            if (name && text) {
+                database.ref('messages').push({
+                    name: name,
+                    text: text,
+                    timestamp: Date.now()
+                });
+                messageInput.value = ''; // Kosongkan input pesan
+                messageInput.focus(); // Fokuskan kembali ke input pesan
+            } else {
+                alert('Nama dan pesan tidak boleh kosong!');
+            }
+        });
+
+        // 5. Logika untuk MENERIMA dan MENAMPILKAN pesan (lebih aman)
+        const messagesRef = database.ref('messages').limitToLast(100);
+
+        messagesRef.on('child_added', (snapshot) => {
+            const message = snapshot.val();
+            if (!message) return; // Pengecekan jika data kosong
+
+            // --- PERBAIKAN KEAMANAN PENTING ---
+            // Menggunakan `textContent` untuk mencegah serangan XSS (Cross-Site Scripting).
+            // Ini memastikan input pengguna (nama & teks) ditampilkan sebagai teks biasa,
+            // bukan sebagai kode HTML.
+
+            const messageWrapper = document.createElement('div');
+            messageWrapper.classList.add('message');
+
+            const messageContent = document.createElement('div');
+            messageContent.classList.add('message-content');
+
+            const nameElement = document.createElement('strong');
+            nameElement.textContent = message.name; // Aman
+
+            const textElement = document.createElement('span');
+            textElement.textContent = message.text; // Aman
+            
+            messageContent.appendChild(nameElement);
+            messageContent.appendChild(textElement);
+            messageWrapper.appendChild(messageContent);
+            messagesContainer.appendChild(messageWrapper);
+
+            // Auto-scroll ke pesan paling bawah (terbaru)
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+    </script>
+</body>
+</html>
