@@ -4,49 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Real-Time Chat ⚡</title>
-    
     <style>
-        /* Reset dasar dan box-sizing untuk layout yang lebih konsisten */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body {
-            height: 100%; /* Memastikan body mengisi seluruh tinggi layar */
+            height: 100%;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f0f2f5;
-            color: #1c1e21;
         }
-
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* Kontainer utama aplikasi, dioptimalkan untuk mengisi layar mobile */
+        body { display: flex; justify-content: center; align-items: center; }
         #chat-app {
-            width: 100%;
-            height: 100%; /* Mengisi seluruh tinggi body */
-            max-width: 600px;
-            background: #ffffff;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            /* Di layar besar, berikan sedikit border-radius */
+            width: 100%; height: 100%; max-width: 600px;
+            background: #ffffff; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            display: flex; flex-direction: column; overflow: hidden;
             border-radius: 12px;
         }
-        
-        /* Hilangkan border-radius di layar kecil agar tampak penuh */
-        @media (max-width: 600px) {
-            #chat-app {
-                border-radius: 0;
-            }
-        }
-
+        @media (max-width: 600px) { #chat-app { border-radius: 0; } }
         #chat-header {
             background: linear-gradient(135deg, #007BFF, #0056b3);
             color: white;
@@ -56,94 +28,161 @@
             font-weight: 600;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             z-index: 10;
-            flex-shrink: 0; /* Mencegah header menyusut */
+            flex-shrink: 0;
+            position: relative;
         }
-
-        #messages-container {
-            flex-grow: 1; /* Mengisi sisa ruang yang tersedia */
-            padding: 1rem;
-            overflow-y: auto; /* Scroll hanya jika konten meluap */
-            scroll-behavior: smooth; /* Animasi scroll yang halus */
-        }
-
-        .message {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 0.75rem;
-        }
-
-        .message-content {
-            background-color: #e4e6eb;
-            padding: 0.6rem 1rem;
-            border-radius: 18px;
-            max-width: 80%;
-            align-self: flex-start;
-            word-wrap: break-word; /* Memastikan teks panjang tidak merusak layout */
-        }
-        
-        .message-content strong {
-            display: block;
-            color: #007BFF;
-            margin-bottom: 0.2rem;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-
-        #message-form {
-            display: flex;
-            padding: 0.75rem;
-            border-top: 1px solid #ddd;
-            background-color: #f9f9f9;
-            flex-shrink: 0; /* Mencegah form menyusut */
-        }
-
-        #message-form input {
-            border: 1px solid #ccc;
-            padding: 0.7rem;
-            border-radius: 20px;
-            font-size: 1rem;
-            flex-grow: 1;
-            transition: border-color 0.2s;
-        }
-
-        #message-form input:focus {
-            outline: none;
-            border-color: #007BFF;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-        }
-        
-        #name-input {
-            flex-grow: 0;
-            width: 100px;
-            margin-right: 0.5rem;
-        }
-
-        #message-form button {
-            background-color: #007BFF;
+        #logout-btn {
+            position: absolute;
+            top: 50%;
+            right: 1rem;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
             color: white;
             border: none;
-            padding: 0 1.25rem;
-            margin-left: 0.5rem;
-            border-radius: 20px;
+            padding: 0.3rem 0.6rem;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 0.8rem;
             font-weight: 500;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s;
         }
-
-        #message-form button:hover {
+        #logout-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        #login-container {
+            flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 2rem; text-align: center; gap: 1rem;
+        }
+        #login-form {
+            display: flex; flex-direction: column; width: 100%; max-width: 300px; gap: 1rem;
+        }
+        #login-form input[type="text"] {
+            border: 1px solid #ccc; padding: 0.7rem; border-radius: 8px; font-size: 1rem;
+        }
+        .file-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .file-input-container label {
+            background-color: #007BFF;
+            color: white;
+            padding: 0.7rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            flex-grow: 1;
+            text-align: center;
+            transition: background-color 0.2s;
+        }
+        .file-input-container label:hover {
             background-color: #0056b3;
+        }
+        #profile-pic-input {
+            display: none;
+        }
+        #file-name {
+            font-size: 0.9rem;
+            color: #555;
+            flex-grow: 2;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #login-form button {
+            background-color: #007BFF; color: white; border: none; padding: 0.7rem;
+            border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        #login-form button:hover { background-color: #0056b3; }
+        #messages-container {
+            flex-grow: 1; padding: 1rem; overflow-y: auto; scroll-behavior: smooth;
+        }
+        .message { 
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0.75rem; 
+            position: relative;
+        }
+        .message-profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .message-content {
+            background-color: #e4e6eb; padding: 0.6rem 1rem; border-radius: 18px;
+            max-width: 80%; word-wrap: break-word;
+        }
+        .message-content strong {
+            display: block; color: #007BFF; margin-bottom: 0.2rem;
+            font-size: 0.85em; font-weight: 600;
+        }
+        #message-form {
+            display: none;
+            padding: 0.75rem; border-top: 1px solid #ddd;
+            background-color: #f9f9f9; flex-shrink: 0;
+        }
+        #message-form input {
+            border: 1px solid #ccc; padding: 0.7rem; border-radius: 20px;
+            font-size: 1rem; flex-grow: 1; transition: border-color 0.2s;
+        }
+        #message-form input:focus {
+            outline: none; border-color: #007BFF;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        #message-form button {
+            background-color: #007BFF; color: white; border: none; padding: 0 1.25rem;
+            margin-left: 0.5rem; border-radius: 20px; cursor: pointer;
+            font-size: 1rem; font-weight: 500; transition: background-color 0.2s ease;
+        }
+        #message-form button:hover { background-color: #0056b3; }
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ff4d4f;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 0 0.5rem;
+            transition: color 0.2s;
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+        }
+        .message:hover .delete-btn {
+            opacity: 1;
         }
     </style>
 </head>
 <body>
-
     <div id="chat-app">
-        <div id="chat-header">Live Chat By SamuDev ✉️</div>
-        <div id="messages-container">
-            </div>
+        <div id="chat-header">
+            Firebase Live Chat
+            <button id="logout-btn" style="display: none;">Logout</button>
+        </div>
+        
+        <div id="login-container">
+            <h2>Masuk</h2>
+            <form id="login-form">
+                <input type="text" id="username-input" placeholder="Masukkan nama Anda" required autocomplete="name">
+                <label style="text-align: left; font-size: 0.9rem;">Pilih Foto Profil (Opsional):</label>
+                <div class="file-input-container">
+                    <label for="profile-pic-input">Pilih File</label>
+                    <span id="file-name">Tidak ada file yang dipilih</span>
+                    <input type="file" id="profile-pic-input" accept="image/*">
+                </div>
+                <button type="submit">Lanjutkan</button>
+            </form>
+        </div>
+
+        <div id="messages-container" style="display: none;"></div>
         <form id="message-form" action="javascript:void(0);">
-            <input type="text" id="name-input" placeholder="Nama" required autocomplete="name">
             <input type="text" id="message-input" placeholder="Ketik pesan..." required autocomplete="off">
             <button type="submit">Kirim</button>
         </form>
@@ -153,7 +192,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // 1. Konfigurasi Firebase Anda
         const firebaseConfig = {
             apiKey: "AIzaSyByXv08gFFtlW5cStMaOjFEkK-EybTFzA8",
             authDomain: "chat-samudev.firebaseapp.com",
@@ -163,75 +201,189 @@
             messagingSenderId: "753343096382",
             appId: "1:753343096382:android:5174bd75dce635ff4d936f"
         };
-
-        // 2. Inisialisasi Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 3. Referensi ke elemen-elemen HTML
-        const messageForm = document.getElementById('message-form');
-        const nameInput = document.getElementById('name-input');
-        const messageInput = document.getElementById('message-input');
+        const loginForm = document.getElementById('login-form');
+        const usernameInput = document.getElementById('username-input');
+        const profilePicInput = document.getElementById('profile-pic-input');
+        const loginContainer = document.getElementById('login-container');
         const messagesContainer = document.getElementById('messages-container');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const logoutBtn = document.getElementById('logout-btn');
+        const fileNameSpan = document.getElementById('file-name');
         
-        // Simpan & muat nama dari local storage untuk kemudahan pengguna
-        nameInput.value = localStorage.getItem('chat_username') || '';
-        nameInput.addEventListener('input', () => {
-            localStorage.setItem('chat_username', nameInput.value);
+        let currentUser = { name: null, profilePicUrl: null };
+        const POSTIMAGE_API_KEY = "367b93bc2d63c10673f00a87b8f01622";
+
+        const storedUser = localStorage.getItem('chat_user');
+        if (storedUser) {
+            currentUser = JSON.parse(storedUser);
+            showChatScreen();
+        }
+
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const name = usernameInput.value.trim();
+            if (!name) {
+                alert('Nama tidak boleh kosong!');
+                return;
+            }
+
+            currentUser.name = name;
+
+            const file = profilePicInput.files[0];
+            if (file) {
+                try {
+                    const base64String = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            resolve(reader.result.split(',')[1]);
+                        };
+                        reader.onerror = error => reject(error);
+                        reader.readAsDataURL(file);
+                    });
+
+                    const response = await fetch(`https://postimage.org/json/`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            "key": POSTIMAGE_API_KEY,
+                            "upload": base64String
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    console.log("Respons dari Postimage.org:", result);
+
+                    if (result.status === "OK") {
+                        currentUser.profilePicUrl = result.url;
+                    } else {
+                        console.error("Gagal mengunggah foto. Respons API:", result);
+                        alert(`Gagal mengunggah foto. Alasan: ${result.error || 'Tidak diketahui'}`);
+                        currentUser.profilePicUrl = null;
+                    }
+                } catch (error) {
+                    console.error("Error saat mengunggah foto:", error);
+                    alert("Terjadi kesalahan saat mengunggah foto. Pastikan Anda terhubung ke internet.");
+                    currentUser.profilePicUrl = null;
+                }
+            } else {
+                currentUser.profilePicUrl = null;
+            }
+            
+            localStorage.setItem('chat_user', JSON.stringify(currentUser));
+            showChatScreen();
         });
 
-        // 4. Logika untuk MENGIRIM pesan
-        messageForm.addEventListener('submit', (event) => {
-            event.preventDefault(); // Mencegah form refresh halaman
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('chat_user');
+            currentUser = { name: null, profilePicUrl: null };
+            location.reload();
+        });
 
-            const name = nameInput.value.trim();
-            const text = messageInput.value.trim();
-
-            if (name && text) {
-                database.ref('messages').push({
-                    name: name,
-                    text: text,
-                    timestamp: Date.now()
-                });
-                messageInput.value = ''; // Kosongkan input pesan
-                messageInput.focus(); // Fokuskan kembali ke input pesan
+        profilePicInput.addEventListener('change', () => {
+            if (profilePicInput.files.length > 0) {
+                fileNameSpan.textContent = profilePicInput.files[0].name;
             } else {
-                alert('Nama dan pesan tidak boleh kosong!');
+                fileNameSpan.textContent = 'Tidak ada file yang dipilih';
             }
         });
 
-        // 5. Logika untuk MENERIMA dan MENAMPILKAN pesan (lebih aman)
-        const messagesRef = database.ref('messages').limitToLast(100);
+        function showChatScreen() {
+            loginContainer.style.display = 'none';
+            messagesContainer.style.display = 'block';
+            messageForm.style.display = 'flex';
+            logoutBtn.style.display = 'block';
+        }
 
-        messagesRef.on('child_added', (snapshot) => {
+        messageForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const text = messageInput.value.trim();
+
+            if (text) {
+                database.ref('messages').push({
+                    name: currentUser.name,
+                    text: text,
+                    profilePicUrl: currentUser.profilePicUrl,
+                    timestamp: Date.now()
+                });
+                messageInput.value = '';
+                messageInput.focus();
+            } else {
+                alert('Pesan tidak boleh kosong!');
+            }
+        });
+        
+        function createMessageElement(snapshot) {
             const message = snapshot.val();
-            if (!message) return; // Pengecekan jika data kosong
-
-            // --- PERBAIKAN KEAMANAN PENTING ---
-            // Menggunakan `textContent` untuk mencegah serangan XSS (Cross-Site Scripting).
-            // Ini memastikan input pengguna (nama & teks) ditampilkan sebagai teks biasa,
-            // bukan sebagai kode HTML.
+            const messageKey = snapshot.key;
+            if (!message) return null;
 
             const messageWrapper = document.createElement('div');
             messageWrapper.classList.add('message');
+            messageWrapper.dataset.key = messageKey;
+            
+            const profilePic = document.createElement('img');
+            profilePic.classList.add('message-profile-pic');
+            profilePic.src = message.profilePicUrl || 'https://via.placeholder.com/40';
+            profilePic.alt = `${message.name}'s profile picture`;
+            messageWrapper.appendChild(profilePic);
 
             const messageContent = document.createElement('div');
             messageContent.classList.add('message-content');
-
+            
             const nameElement = document.createElement('strong');
-            nameElement.textContent = message.name; // Aman
-
+            nameElement.textContent = message.name;
             const textElement = document.createElement('span');
-            textElement.textContent = message.text; // Aman
+            textElement.textContent = message.text;
             
             messageContent.appendChild(nameElement);
             messageContent.appendChild(textElement);
             messageWrapper.appendChild(messageContent);
-            messagesContainer.appendChild(messageWrapper);
+            
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'x';
+            deleteButton.classList.add('delete-btn');
+            
+            deleteButton.addEventListener('click', () => {
+                if (confirm('Apakah Anda yakin ingin menghapus pesan ini?')) {
+                    const messageRef = database.ref('messages').child(messageKey);
+                    messageRef.remove()
+                        .then(() => {
+                            console.log("Pesan berhasil dihapus!");
+                        })
+                        .catch((error) => {
+                            console.error("Error saat menghapus pesan: ", error);
+                        });
+                }
+            });
 
-            // Auto-scroll ke pesan paling bawah (terbaru)
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            messageWrapper.appendChild(deleteButton);
+
+            return messageWrapper;
+        }
+
+        const messagesRef = database.ref('messages').limitToLast(100);
+        messagesRef.on('child_added', (snapshot) => {
+            const messageElement = createMessageElement(snapshot);
+            if (messageElement) {
+                messagesContainer.appendChild(messageElement);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        });
+
+        messagesRef.on('child_removed', (oldSnapshot) => {
+            const messageKey = oldSnapshot.key;
+            const messageElement = document.querySelector(`.message[data-key="${messageKey}"]`);
+            if (messageElement) {
+                messageElement.remove();
+            }
         });
     </script>
 </body>
-</html>
+                                           </html>
